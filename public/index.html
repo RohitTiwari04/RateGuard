@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>RateGuard - Distributed Rate Limiting Engine</title>
+  <!-- Google Fonts: Outfit and Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="index.css">
+  <!-- Chart.js for real-time analytics graphs -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+
+  <!-- Toast Notification System -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- AUTHENTICATION VIEW (Shows when token is missing or invalid) -->
+  <div id="auth-overlay" class="auth-overlay">
+    <div class="auth-card">
+      <div class="auth-header">
+        <div class="logo-container">
+          <svg class="shield-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span class="logo-text">RateGuard</span>
+        </div>
+        <h2>Sign In</h2>
+        <p>Access the administrative dashboard to manage rate rules and view analytics.</p>
+      </div>
+      <form id="login-form">
+        <div class="form-group">
+          <label for="login-email">Email Address</label>
+          <input type="email" id="login-email" required placeholder="admin@rateguard.io" value="admin@rateguard.io">
+        </div>
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input type="password" id="login-password" required placeholder="••••••••" value="AdminSecurePassword123!">
+        </div>
+        <button type="submit" class="btn btn-primary auth-submit-btn">
+          <span>Authenticate Session</span>
+          <svg class="arrow-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- MAIN DASHBOARD CONTENT -->
+  <div id="app-container" class="app-container hidden">
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <div class="logo-container">
+          <svg class="shield-logo glow-logo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+          </svg>
+          <span class="logo-text">RateGuard</span>
+        </div>
+        <div class="system-status">
+          <span class="status-pulse green"></span>
+          <span class="status-text">Node Cluster Online</span>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <button class="nav-item active" data-tab="rules-tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="3" width="7" height="9"></rect>
+            <rect x="14" y="3" width="7" height="5"></rect>
+            <rect x="14" y="12" width="7" height="9"></rect>
+            <rect x="3" y="16" width="7" height="5"></rect>
+          </svg>
+          <span>Rules Configurator</span>
+        </button>
+        <button class="nav-item" data-tab="tester-tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="5 3 19 12 5 21 5 3"></polygon>
+          </svg>
+          <span>API Testing Console</span>
+        </button>
+        <button class="nav-item" data-tab="analytics-tab">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Metrics & Live Logs</span>
+        </button>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-profile">
+          <div class="avatar">A</div>
+          <div class="user-details">
+            <span class="user-email" id="profile-email">admin@rateguard.io</span>
+            <span class="user-role" id="profile-role">Administrator</span>
+          </div>
+        </div>
+        <button id="logout-btn" class="logout-btn" title="Sign Out">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top header bar -->
+      <header class="top-bar">
+        <h1 id="tab-title">Rules Configurator</h1>
+        <div class="top-bar-actions">
+          <div class="api-key-badge" id="api-key-badge">
+            <span class="badge-label">Active Key:</span>
+            <span class="badge-value" id="active-key-value">Loading...</span>
+            <button class="copy-key-btn" id="copy-key-btn" title="Copy API Key">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+            </button>
+          </div>
+          <button class="btn btn-secondary btn-icon" id="refresh-rules-btn" title="Reload Rule Cache">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Sync Cache</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- TAB 1: RULES CONFIGURATOR -->
+      <section id="rules-tab" class="tab-pane active">
+        <div class="section-actions">
+          <h3>Active Rate Limit Strategy List</h3>
+          <button class="btn btn-primary btn-icon" id="open-create-modal-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"></line>
+              <line x1="5" y1="12" x2="19" y2="12"></line>
+            </svg>
+            <span>New Strategy Rule</span>
+          </button>
+        </div>
+
+        <div id="rules-grid" class="rules-grid">
+          <!-- Dynamically populated rules cards -->
+          <div class="loading-state">
+            <div class="spinner"></div>
+            <span>Fetching rate-limiting rules...</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 2: API TESTING CONSOLE -->
+      <section id="tester-tab" class="tab-pane">
+        <div class="tester-grid">
+          <!-- Request Panel -->
+          <div class="tester-card card-request">
+            <div class="card-header">
+              <h3>Endpoint Selector</h3>
+              <p>Simulate concurrent API requests under the configured limits.</p>
+            </div>
+            
+            <div class="form-group">
+              <label for="tester-endpoint">Select Targeted Endpoint</label>
+              <select id="tester-endpoint">
+                <option value="/api/v1/test/free" data-method="GET">GET /api/v1/test/free (Token Bucket default)</option>
+                <option value="/api/v1/test/premium" data-method="GET">GET /api/v1/test/premium (Token Bucket Premium)</option>
+                <option value="/api/v1/test/auth/login" data-method="GET">GET /api/v1/test/auth/login (Fixed Window Counter)</option>
+                <option value="/api/v1/test/heavy" data-method="GET">GET /api/v1/test/heavy (Leaky Bucket)</option>
+                <option value="/api/v1/test/search" data-method="GET">GET /api/v1/test/search (Sliding Window Counter)</option>
+                <option value="/api/v1/test/payment/checkout" data-method="GET">GET /api/v1/test/payment/checkout (Sliding Window Log)</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="tester-key-type">Authentication Method</label>
+              <div class="radio-group">
+                <label class="radio-label">
+                  <input type="radio" name="auth-type" value="apikey" checked>
+                  <span>Use Saved API Key</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="auth-type" value="jwt">
+                  <span>Use Admin JWT Token</span>
+                </label>
+                <label class="radio-label">
+                  <input type="radio" name="auth-type" value="unauthenticated">
+                  <span>No Auth Credentials</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="tester-actions">
+              <button class="btn btn-primary" id="fire-request-btn">
+                <span>Fire Single Request</span>
+              </button>
+              <button class="btn btn-secondary" id="fire-burst-btn">
+                <span>Fire Request Burst (Loop x10)</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Quota Remaining Gauge Card -->
+          <div class="tester-card card-gauge">
+            <div class="card-header">
+              <h3>Quota Gauge</h3>
+              <p>Visual status based on X-RateLimit headers.</p>
+            </div>
+            
+            <div class="gauge-container">
+              <div class="circular-progress" id="circular-progress">
+                <div class="inner-circle">
+                  <span id="gauge-remaining">--</span>
+                  <span class="slash">/</span>
+                  <span id="gauge-limit">--</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="gauge-details">
+              <div class="detail-row">
+                <span>Remaining Limit Ratio:</span>
+                <span id="gauge-ratio">--%</span>
+              </div>
+              <div class="detail-row">
+                <span>Time-To-Reset (TTL):</span>
+                <span id="gauge-reset" class="glow-green">--</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Console Logger Response Card -->
+          <div class="tester-card card-response full-width">
+            <div class="card-header border-bottom">
+              <h3>Console Outputs</h3>
+              <button class="clear-btn" id="clear-console-btn">Clear Log</button>
+            </div>
+            <div class="console-body" id="console-body">
+              <div class="console-line system">Console initialized. Ready to receive requests...</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: METRICS & LIVE LOGS -->
+      <section id="analytics-tab" class="tab-pane">
+        <div class="analytics-grid">
+          <!-- Charts Section -->
+          <div class="analytics-card chart-card">
+            <div class="card-header">
+              <h3>Requests Status Breakdown</h3>
+            </div>
+            <div class="chart-container">
+              <canvas id="metricsChart"></canvas>
+            </div>
+          </div>
+
+          <!-- System Overview stats -->
+          <div class="analytics-card stats-card">
+            <div class="card-header">
+              <h3>Distributed System Metrics</h3>
+            </div>
+            <div class="stats-grid">
+              <div class="stat-item">
+                <span class="stat-value" id="stat-total-requests">0</span>
+                <span class="stat-label">Total Monitored Requests</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value glow-green" id="stat-allowed-requests">0</span>
+                <span class="stat-label">Allowed (HTTP 200)</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value glow-red" id="stat-blocked-requests">0</span>
+                <span class="stat-label">Blocked (HTTP 429)</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="stat-block-rate">0%</span>
+                <span class="stat-label">Average Block Rate</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Logs Section -->
+          <div class="analytics-card logs-card full-width">
+            <div class="card-header border-bottom">
+              <h3>Dynamic Rate Limit Execution Logs (BullMQ Batched)</h3>
+              <button class="btn btn-secondary btn-icon" id="clear-db-logs-btn">
+                <span>Clear DB Logs</span>
+              </button>
+            </div>
+            <div class="logs-table-wrapper">
+              <table class="logs-table">
+                <thead>
+                  <tr>
+                    <th>Timestamp</th>
+                    <th>Identifier Context</th>
+                    <th>IP Address</th>
+                    <th>Endpoint Path</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody id="db-logs-body">
+                  <tr>
+                    <td colspan="5" class="empty-state">No execution logs found. Run some API requests to generate logs!</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <!-- CREATE RULE MODAL -->
+  <div id="create-modal" class="modal-overlay hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>Create Rate Limit Strategy</h3>
+        <button class="close-modal-btn" id="close-create-modal-btn">&times;</button>
+      </div>
+      <form id="create-rule-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rule-name">Strategy Name</label>
+            <input type="text" id="rule-name" required placeholder="e.g. Sensitive API Limit">
+          </div>
+          <div class="form-group">
+            <label for="rule-limitBy">Limit By (Identity Context)</label>
+            <select id="rule-limitBy" required>
+              <option value="PLAN">PLAN</option>
+              <option value="ENDPOINT">ENDPOINT</option>
+              <option value="USER_ID">USER_ID</option>
+              <option value="API_KEY">API_KEY</option>
+              <option value="IP_ADDRESS">IP_ADDRESS</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rule-value">Limit Value Match Pattern</label>
+            <input type="text" id="rule-value" required placeholder="e.g. FREE or /api/v1/test/free">
+          </div>
+          <div class="form-group">
+            <label for="rule-algorithm">Algorithm Strategy</label>
+            <select id="rule-algorithm" required>
+              <option value="TOKEN_BUCKET">TOKEN_BUCKET (Token Bucket)</option>
+              <option value="FIXED_WINDOW">FIXED_WINDOW (Fixed Window Counter)</option>
+              <option value="SLIDING_WINDOW_COUNTER">SLIDING_WINDOW_COUNTER (Sliding Window Counter)</option>
+              <option value="SLIDING_WINDOW_LOG">SLIDING_WINDOW_LOG (Sliding Window Log)</option>
+              <option value="LEAKY_BUCKET">LEAKY_BUCKET (Leaky Bucket)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rule-limitValue">Max Requests Allowed</label>
+            <input type="number" id="rule-limitValue" required min="1" placeholder="e.g. 5">
+          </div>
+          <div class="form-group">
+            <label for="rule-windowSize">Window Size (Seconds)</label>
+            <input type="number" id="rule-windowSize" required min="1" placeholder="e.g. 60">
+          </div>
+        </div>
+
+        <!-- Token Bucket/Leaky Bucket specific fields (Optional) -->
+        <div class="form-section-header">
+          <h4>Bucket Specific Configurations (Optional)</h4>
+          <p>Leave blank to calculate automatically based on standard limits.</p>
+        </div>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label for="rule-bucketCapacity">Bucket Capacity</label>
+            <input type="number" id="rule-bucketCapacity" min="1" placeholder="Defaults to Max Requests">
+          </div>
+          <div class="form-group">
+            <label for="rule-refillRate">Refill Rate (Tokens/sec)</label>
+            <input type="number" step="0.0001" id="rule-refillRate" min="0" placeholder="Defaults to Max/Window">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" id="cancel-create-modal-btn">Cancel</button>
+          <button type="submit" class="btn btn-primary">Deploy Strategy Rule</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- JavaScript Application -->
+  <script src="app.js"></script>
+</body>
+</html>

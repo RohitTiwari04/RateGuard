@@ -1,0 +1,92 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  USER
+}
+
+enum Plan {
+  FREE
+  PREMIUM
+  ENTERPRISE
+}
+
+enum LimitType {
+  USER_ID
+  API_KEY
+  IP_ADDRESS
+  ENDPOINT
+  PLAN
+}
+
+enum Algorithm {
+  TOKEN_BUCKET
+  FIXED_WINDOW
+  SLIDING_WINDOW_COUNTER
+  SLIDING_WINDOW_LOG
+  LEAKY_BUCKET
+}
+
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  role         Role     @default(USER)
+  plan         Plan     @default(FREE)
+  apiKeys      ApiKey[]
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@map("users")
+}
+
+model ApiKey {
+  id        String   @id @default(uuid())
+  key       String   @unique
+  label     String
+  active    Boolean  @default(true)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("api_keys")
+}
+
+model RateLimitRule {
+  id             String    @id @default(uuid())
+  name           String
+  limitBy        LimitType
+  value          String    // The matching pattern (e.g. "FREE", "/api/v1/search", etc.)
+  algorithm      Algorithm @default(TOKEN_BUCKET)
+  limitValue     Int       // Max requests
+  windowSize     Int       // In seconds
+  bucketCapacity Int?      // For Token Bucket / Leaky Bucket
+  refillRate     Float?    // For Token Bucket / Leaky Bucket (tokens per second)
+  active         Boolean   @default(true)
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@map("rate_limit_rules")
+}
+
+model RateLimitLog {
+  id         String   @id @default(uuid())
+  ruleId     String?
+  identifier String
+  ipAddress  String
+  endpoint   String
+  allowed    Boolean
+  timestamp  DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([identifier])
+  @@map("rate_limit_logs")
+}
