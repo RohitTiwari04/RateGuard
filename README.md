@@ -340,9 +340,3 @@ This ensures real-time rule synchronization across instances within milliseconds
 
 ---
 
-## Resume Highlights & Impact Statements
-
-* **Designed and Implemented** a high-performance, distributed rate-limiting engine supporting 5 algorithms (Token Bucket, Leaky Bucket, Sliding Window Counter, Sliding Window Log, Fixed Window) using cluster-compatible **Redis Lua scripts**, processing over **25k requests per second** with **sub-millisecond evaluation latency**.
-* **Engineered a distributed cache synchronization system** utilizing **Redis Pub/Sub** to invalidate and refresh active rules caches in real-time across multiple Node.js server instances, achieving $O(1)$ rule lookup efficiency and eliminating database queries on the API request path.
-* **Optimized database write load** by developing an asynchronous background logging pipeline with **BullMQ**, reducing PostgreSQL write operations by **92%** and decoupling API response latencies from database transaction delays.
-* **Configured full observability instrumentation** using **Prometheus and Grafana**, creating custom dashboards tracking allowed/blocked request rates, strategy distributions, and P95 latency profiles, reducing average MTTR for traffic anomalies.
