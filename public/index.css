@@ -1,36 +1,37 @@
-/* DESIGN SYSTEM: RATEGUARD DASHBOARD */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
 
 :root {
   --font-family-sans: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --font-family-display: 'Outfit', var(--font-family-sans);
+  --font-family-display: 'Share Tech Mono', monospace;
+  --font-family-pixel: 'VT323', monospace;
   
-  /* Harmonious Dark Palette */
-  --color-bg-base: #080B10;
-  --color-bg-panel: rgba(17, 24, 39, 0.85);
-  --color-bg-card: rgba(30, 41, 59, 0.55);
-  --color-bg-card-hover: rgba(30, 41, 59, 0.85);
-  --color-bg-input: rgba(15, 23, 42, 0.6);
+  /* Harmonious Dark Amber/Starknet Space Palette */
+  --color-bg-base: #060504; /* Deep cosmic space black */
+  --color-bg-panel: rgba(14, 11, 9, 0.93); /* Warm panel backdrop */
+  --color-bg-card: rgba(28, 20, 16, 0.45); /* Orange tinted cards */
+  --color-bg-card-hover: rgba(43, 31, 23, 0.7);
+  --color-bg-input: rgba(18, 12, 9, 0.95);
   
   /* Primary & Accent Gradients */
-  --color-primary: #6366f1;
-  --color-primary-hover: #4f46e5;
-  --color-accent: #06b6d4;
-  --gradient-accent: linear-gradient(135deg, #6366f1 0%, #06b6d4 100%);
-  --gradient-danger: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%);
+  --color-primary: #f97316; /* Amber orange */
+  --color-primary-hover: #ea580c;
+  --color-accent: #fbbf24; /* Yellow amber glow */
+  --gradient-accent: linear-gradient(135deg, #f97316 0%, #fbbf24 100%);
+  --gradient-danger: linear-gradient(135deg, #ef4444 0%, #b91c1c 100%);
   
   /* Border & Shadows */
-  --border-color: rgba(255, 255, 255, 0.08);
-  --border-color-glow: rgba(99, 102, 241, 0.25);
-  --shadow-base: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
-  --shadow-glow: 0 0 20px rgba(99, 102, 241, 0.15);
+  --border-color: rgba(249, 115, 22, 0.15); /* Orange tinted borders */
+  --border-color-glow: rgba(249, 115, 22, 0.45);
+  --shadow-base: 0 8px 32px 0 rgba(0, 0, 0, 0.7);
+  --shadow-glow: 0 0 20px rgba(249, 115, 22, 0.2);
   
   /* Status Colors */
   --color-success: #10b981;
-  --color-danger: #f43f5e;
+  --color-danger: #ef4444;
   --color-warning: #f59e0b;
-  --color-text-primary: #f8fafc;
-  --color-text-secondary: #94a3b8;
-  --color-text-muted: #64748b;
+  --color-text-primary: #fafaf9;
+  --color-text-secondary: #d6d3d1;
+  --color-text-muted: #78716c;
   
   --sidebar-width: 280px;
   --border-radius-lg: 16px;
@@ -49,6 +50,19 @@
 body {
   font-family: var(--font-family-sans);
   background-color: var(--color-bg-base);
+  background-image: 
+    radial-gradient(circle at 10% 20%, rgba(249, 115, 22, 0.07) 0%, transparent 40%),
+    radial-gradient(circle at 85% 75%, rgba(234, 88, 12, 0.05) 0%, transparent 45%),
+    radial-gradient(1.5px 1.5px at 40px 60px, #fafaf9, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 120px 200px, rgba(250,250,249,0.8), rgba(0,0,0,0)),
+    radial-gradient(1.5px 1.5px at 250px 350px, #fafaf9, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 350px 80px, rgba(250,250,249,0.9), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 500px 480px, #fafaf9, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 700px 150px, rgba(250,250,249,0.7), rgba(0,0,0,0)),
+    radial-gradient(2px 2px at 850px 300px, #fafaf9, rgba(0,0,0,0)),
+    radial-gradient(1px 1px at 950px 600px, rgba(250,250,249,0.9), rgba(0,0,0,0));
+  background-repeat: repeat;
+  background-size: 1000px 800px;
   color: var(--color-text-primary);
   min-height: 100vh;
   overflow-x: hidden;
